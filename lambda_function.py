@@ -1,21 +1,17 @@
 import json
+import os
+import sys
+import random
 
 from nacl.signing import VerifyKey
 from nacl.exceptions import BadSignatureError
 
-PUBLIC_KEY = os.environ.get("PUBLIC_KEY") # found on Discord Application -> General Information page
-PING_PONG = {"type": 1}
+PUBLIC_KEY = os.environ.get("PUBLIC_KEY")
+REGISTERED_COMMANDS = ["rt", "sr", "random"]
+PIN_REGISTRY = {}
 
-# 2 & 3 have been deprecated!
-# https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object
-RESPONSE_TYPES =  { 
-                    "PONG": 1, 
-                    "ACK_NO_SOURCE": 2, 
-                    "MESSAGE_NO_SOURCE": 4, 
-                    "MESSAGE_WITH_SOURCE": 4, 
-                    "ACK_WITH_SOURCE": 5
-                  }
-
+with open(os.path.join(sys.path[0], 'pins.json')) as jsonfile:
+    PIN_REGISTRY = json.load(jsonfile)
 
 def verify_signature(event):
     raw_body = event.get("rawBody")
@@ -39,20 +35,41 @@ def lambda_handler(event, context):
     except Exception as e:
         raise Exception(f"[UNAUTHORIZED] Invalid request signature: {e}")
 
-
-    # check if message is a ping
     body = event.get('body-json')
+    
+    # check if message is a ping
     if ping_pong(body):
-        return PING_PONG
-    
-    
-    # dummy return
-    return {
-            "type": RESPONSE_TYPES['MESSAGE_NO_SOURCE'],
-            "data": {
-                "tts": False,
-                "content": "BEEP BOOP",
-                "embeds": [],
-                "allowed_mentions": []
-            }
-        }
+        return {"type": 1}
+
+    data = body["data"]
+
+    if data["name"] in REGISTERED_COMMANDS:
+        command = body["data"]["name"]
+        
+        # Status Check
+        if command == "beep":
+            return { "type": 4, "data": { "content": "Boop" }}
+
+        # Gets a specific pin
+        elif command == "rt":
+            try:
+                return { "type": 4, "data": { "content": PIN_REGISTRY["keywords"][data["options"][0]["value"]]["url"] }}
+            except KeyError:
+                return { "type": 4, "data": { "content": "No such pin" }}
+
+        # Gets a random pin with the search key specified
+        elif command == "sr":
+            search_key = data["options"][0]["value"]
+            all_keys = [pin_name for pin_name in PIN_REGISTRY["keywords"].keys() if search_key in pin_name and PIN_REGISTRY["keywords"][pin_name]["include_random"] == True]
+            random_key = random.sample(all_keys, 1)[0]
+            sr_url = PIN_REGISTRY["keywords"][random_key]["url"]
+            if len(all_keys) == 0:
+                return { "type": 4, "data": { "content": "None found" }}
+            else:
+                return { "type": 4, "data": { "content": f'{random_key} {sr_url}' }}
+
+        # Gets a random pin
+        elif command == "random":
+            random_key = random.sample(PIN_REGISTRY["keywords"].keys(), 1)[0]
+            random_url = PIN_REGISTRY["keywords"][random_key]["url"]
+            return { "type": 4, "data": { "content": f'{random_key} {random_url}' }}
