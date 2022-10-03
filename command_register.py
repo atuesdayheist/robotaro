@@ -6,6 +6,7 @@ BOT_SECRET_KEY = os.environ.get('BOT_SECRET_KEY')
 PUBLIC_KEY = os.environ.get('PUBLIC_KEY')
 TEST_GUILD_ID = os.environ.get('TEST_GUILD_ID')
 
+# url = f'https://discord.com/api/v10/applications/{APPLICATION_ID}/guilds/{TEST_GUILD_ID}/commands'
 url = f'https://discord.com/api/v10/applications/{APPLICATION_ID}/commands'
 
 # json = {

@@ -1,4 +1,5 @@
 env
 config.sh
-event_sample.json
 pins.json
+testing
+backup
