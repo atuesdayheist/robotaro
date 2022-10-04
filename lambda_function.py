@@ -15,7 +15,7 @@ REGISTERED_COMMANDS = ["rt", "sr", "random", "pin_text", "pin_file"]
 PIN_REGISTRY = {}
 BACKUP_INTERVAL = 7
 
-with open(os.path.join(sys.path[0], 'pins.json')) as jsonfile:
+with open('/tmp/pins.json') as jsonfile:
     PIN_REGISTRY = json.load(jsonfile)
 
 def verify_signature(event):
@@ -95,17 +95,18 @@ def lambda_handler(event, context):
                 attachment_url = data["resolved"]["attachments"][attachment_id]["url"]
                 filename = data["resolved"]["attachments"][attachment_id]["filename"]
 
-                print("Attachments?")
-                print(attachment_url)
-
                 if attachment_url[:4] == 'http' and (attachment_url[-4] == '.' or attachment_url[-5] == '.'):
                     r = requests.get(attachment_url)
                     if not r.ok:
                         return { "type": 4, "data": { "content": "This didn't work for some reason, ask Raph" }}
                     else:
                         print("Try uploading to S3")
+                        print("Write to temp")
                         open(f'/tmp/{filename}', 'wb').write(r.content)
-                        upload_to_s3(f'backup/{filename}', f'{filename}')
+                        print("Upload to S3")
+                        upload_to_s3(f'/tmp/{filename}', f'{filename}')
+                        print("Remove from temp")
+                        os.remove(f'/tmp/{filename}')
                 
                 PIN_REGISTRY["keywords"][pin_name] = {
                     "url": attachment_url,
@@ -139,8 +140,9 @@ def lambda_handler(event, context):
                         return { "type": 4, "data": { "content": "This didn't work for some reason, ask Raph" }}
                     else:
                         print("Try uploading to S3")
-                        open(os.path.join(sys.path[0], f'/tmp/{filename}'), 'wb').write(r.content)
+                        open(f'/tmp/{filename}', 'wb').write(r.content)
                         upload_to_s3(f'/tmp/{filename}', f'{filename}')
+                        os.remove(f'/tmp/{filename}')
 
                 PIN_REGISTRY["keywords"][pin_name] = {
                     "url": pin_text,
