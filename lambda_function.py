@@ -2,6 +2,7 @@ import json
 import os
 import sys
 import random
+import requests
 
 from nacl.signing import VerifyKey
 from nacl.exceptions import BadSignatureError
@@ -10,8 +11,9 @@ from s3_upload import upload_to_s3
 from backup import check_pin_backup
 
 PUBLIC_KEY = os.environ.get("PUBLIC_KEY")
-REGISTERED_COMMANDS = ["rt", "sr", "random"]
+REGISTERED_COMMANDS = ["rt", "sr", "random", "pin_text", "pin_file"]
 PIN_REGISTRY = {}
+BACKUP_INTERVAL = 7
 
 with open(os.path.join(sys.path[0], 'pins.json')) as jsonfile:
     PIN_REGISTRY = json.load(jsonfile)
@@ -78,6 +80,79 @@ def lambda_handler(event, context):
             return { "type": 4, "data": { "content": f'{random_key} {random_url}' }}
 
         # Makes a new Pin
-        elif command == "pin":
-            check_pin_backup(PIN_REGISTRY["last_backup"])
-            
+        elif command == "pin_file":
+            pin_name = data["options"][0]["value"]
+
+            if pin_name in PIN_REGISTRY["keywords"].keys():
+                return { "type": 4, "data": { "content": "Pin already exists" }}
+            else: 
+                # Backup the pins if last backup date was more than a week ago
+                backed_up = check_pin_backup(PIN_REGISTRY["last_backup"], BACKUP_INTERVAL)
+                if backed_up:
+                    PIN_REGISTRY["last_backup"] = backed_up
+
+                attachment_id = data["options"][1]["value"]
+                attachment_url = data["resolved"]["attachments"][attachment_id]["url"]
+                filename = data["resolved"]["attachments"][attachment_id]["filename"]
+
+                print("Attachments?")
+                print(attachment_url)
+
+                if attachment_url[:4] == 'http' and (attachment_url[-4] == '.' or attachment_url[-5] == '.'):
+                    r = requests.get(attachment_url)
+                    if not r.ok:
+                        return { "type": 4, "data": { "content": "This didn't work for some reason, ask Raph" }}
+                    else:
+                        print("Try uploading to S3")
+                        open(f'backup/{filename}', 'wb').write(r.content)
+                        upload_to_s3(f'backup/{filename}', f'{filename}')
+                
+                PIN_REGISTRY["keywords"][pin_name] = {
+                    "url": attachment_url,
+                    "usage": 0,
+                    "pinned by": body["member"]["user"]["username"],
+                    "include_random": True,
+                    "ratpot": False
+                }
+
+                with open('pins.json', 'w') as pinlist:
+                    json.dump(PIN_REGISTRY, pinlist)
+
+            return { "type": 4, "data": { "content": "Successfully Pinned" }}
+
+        elif command == "pin_text":
+            pin_name = data["options"][0]["value"]
+
+            if pin_name in PIN_REGISTRY["keywords"].keys():
+                return { "type": 4, "data": { "content": "Pin already exists" }}
+            else: 
+                # Backup the pins if last backup date was more than a week ago
+                backed_up = check_pin_backup(PIN_REGISTRY["last_backup"], BACKUP_INTERVAL)
+                if backed_up:
+                    PIN_REGISTRY["last_backup"] = backed_up
+
+                pin_text = data["options"][1]["value"]
+                if pin_text[:4] == 'http' and (pin_text[-4] == '.' or pin_text[-5] == '.'):
+                    filename = pin_text.split("/")[-1]
+                    r = requests.get(pin_text)
+                    if not r.ok:
+                        return { "type": 4, "data": { "content": "This didn't work for some reason, ask Raph" }}
+                    else:
+                        print("Try uploading to S3")
+                        open(f'backup/{filename}', 'wb').write(r.content)
+                        upload_to_s3(f'backup/{filename}', f'{filename}')
+
+                PIN_REGISTRY["keywords"][pin_name] = {
+                    "url": pin_text,
+                    "usage": 0,
+                    "pinned by": body["member"]["user"]["username"],
+                    "include_random": True,
+                    "ratpot": False
+                }
+
+                with open('pins.json', 'w') as pinlist:
+                    json.dump(PIN_REGISTRY, pinlist)
+
+            return { "type": 4, "data": { "content": "Successfully Pinned" }}
+    else:
+        print("Invalid Command. This is why your code doesn't work, you idiot.")

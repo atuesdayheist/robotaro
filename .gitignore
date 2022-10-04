@@ -1,5 +1,4 @@
 env
 config.sh
-pins.json
 testing
-backup
+backup/*

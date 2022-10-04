@@ -11,4 +11,4 @@ def upload_to_s3(filepath, filename):
     )
 
     s3 = session.resource('s3')
-    s3.meta.client.upload_file(filepath, filename)
+    s3.meta.client.upload_file(filepath, 'robotaro', filename)

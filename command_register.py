@@ -6,7 +6,7 @@ BOT_SECRET_KEY = os.environ.get('BOT_SECRET_KEY')
 PUBLIC_KEY = os.environ.get('PUBLIC_KEY')
 TEST_GUILD_ID = os.environ.get('TEST_GUILD_ID')
 
-# url = f'https://discord.com/api/v10/applications/{APPLICATION_ID}/guilds/{TEST_GUILD_ID}/commands'
+test_url = f'https://discord.com/api/v10/applications/{APPLICATION_ID}/guilds/{TEST_GUILD_ID}/commands'
 url = f'https://discord.com/api/v10/applications/{APPLICATION_ID}/commands'
 
 # json = {
@@ -43,16 +43,77 @@ url = f'https://discord.com/api/v10/applications/{APPLICATION_ID}/commands'
 #     ]
 # }
 
+# json = {
+#     'name': 'pin',
+#     'type': 1,
+#     'description': 'Adds a new pin',
+#     'options': [
+#         {
+#             "name": "pin_name",
+#             "description": "Name of the Pin",
+#             "type": 3,
+#             "required": True,
+#         },
+#         {
+#             "name": "pin_value",
+#             "description": "What should this return?",
+#             "type": 3,
+#             "required": True,
+#         }
+#     ]
+# }
+
+# json = {
+#     'name': 'random',
+#     'type': 1,
+#     'description': 'Returns a random pin'
+# }
+
+# json = {
+#     'name': 'pin_file',
+#     'type': 1,
+#     'description': 'Adds a new pin.',
+#     'options': [
+#         {
+#             "name": "pin_name",
+#             "description": "Name of the Pin",
+#             "type": 3,
+#             "required": True,
+#         },
+#         {
+#             "name": "pin_attach",
+#             "description": "Attach a file",
+#             "type": 11,
+#             "required": True,
+#         }
+#     ]
+# }
+
 json = {
-    'name': 'random',
+    'name': 'pin_text',
     'type': 1,
-    'description': 'Returns a random pin'
+    'description': 'Adds a new pin.',
+    'options': [
+        {
+            "name": "pin_name",
+            "description": "Name of the Pin",
+            "type": 3,
+            "required": True,
+        },
+        {
+            "name": "pin_text",
+            "description": "Response Text",
+            "type": 3,
+            "required": True,
+        }
+    ]
 }
+
 
 
 headers = {
     'Authorization': f'Bot {BOT_SECRET_KEY}'
 }
 
-r = requests.post(url, headers=headers, json=json)
+r = requests.post(test_url, headers=headers, json=json)
 print(r.text)
