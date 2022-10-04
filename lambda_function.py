@@ -104,7 +104,7 @@ def lambda_handler(event, context):
                         return { "type": 4, "data": { "content": "This didn't work for some reason, ask Raph" }}
                     else:
                         print("Try uploading to S3")
-                        open(f'backup/{filename}', 'wb').write(r.content)
+                        open(f'/tmp/{filename}', 'wb').write(r.content)
                         upload_to_s3(f'backup/{filename}', f'{filename}')
                 
                 PIN_REGISTRY["keywords"][pin_name] = {
@@ -115,7 +115,7 @@ def lambda_handler(event, context):
                     "ratpot": False
                 }
 
-                with open('pins.json', 'w') as pinlist:
+                with open('/tmp/pins.json', 'w') as pinlist:
                     json.dump(PIN_REGISTRY, pinlist)
 
             return { "type": 4, "data": { "content": "Successfully Pinned" }}
@@ -139,8 +139,8 @@ def lambda_handler(event, context):
                         return { "type": 4, "data": { "content": "This didn't work for some reason, ask Raph" }}
                     else:
                         print("Try uploading to S3")
-                        open(os.path.join(sys.path[0], f'backup/{filename}'), 'wb').write(r.content)
-                        upload_to_s3(f'backup/{filename}', f'{filename}')
+                        open(os.path.join(sys.path[0], f'/tmp/{filename}'), 'wb').write(r.content)
+                        upload_to_s3(f'/tmp/{filename}', f'{filename}')
 
                 PIN_REGISTRY["keywords"][pin_name] = {
                     "url": pin_text,
@@ -150,7 +150,7 @@ def lambda_handler(event, context):
                     "ratpot": False
                 }
 
-                with open(os.path.join(sys.path[0], 'pins.json'), 'w') as pinlist:
+                with open('/tmp/pins.json', 'w') as pinlist:
                     json.dump(PIN_REGISTRY, pinlist)
 
             return { "type": 4, "data": { "content": "Successfully Pinned" }}
