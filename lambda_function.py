@@ -6,6 +6,9 @@ import random
 from nacl.signing import VerifyKey
 from nacl.exceptions import BadSignatureError
 
+from s3_upload import upload_to_s3
+from backup import check_pin_backup
+
 PUBLIC_KEY = os.environ.get("PUBLIC_KEY")
 REGISTERED_COMMANDS = ["rt", "sr", "random"]
 PIN_REGISTRY = {}
@@ -73,3 +76,8 @@ def lambda_handler(event, context):
             random_key = random.sample(PIN_REGISTRY["keywords"].keys(), 1)[0]
             random_url = PIN_REGISTRY["keywords"][random_key]["url"]
             return { "type": 4, "data": { "content": f'{random_key} {random_url}' }}
+
+        # Makes a new Pin
+        elif command == "pin":
+            check_pin_backup(PIN_REGISTRY["last_backup"])
+            
