@@ -1,6 +1,5 @@
 import json
 import os
-import sys
 import random
 import requests
 
@@ -8,6 +7,7 @@ from nacl.signing import VerifyKey
 from nacl.exceptions import BadSignatureError
 
 from s3_upload import upload_to_s3
+from s3_download import download_from_s3
 from backup import check_pin_backup
 
 PUBLIC_KEY = os.environ.get("PUBLIC_KEY")
@@ -15,6 +15,7 @@ REGISTERED_COMMANDS = ["rt", "sr", "random", "pin_text", "pin_file"]
 PIN_REGISTRY = {}
 BACKUP_INTERVAL = 7
 
+download_from_s3('pins.json', '/tmp/pins.json')
 with open('/tmp/pins.json') as jsonfile:
     PIN_REGISTRY = json.load(jsonfile)
 

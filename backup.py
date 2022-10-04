@@ -6,6 +6,7 @@ def check_pin_backup(backup_datestring, BACKUP_INTERVAL):
     if datetime.today() - timedelta(days=BACKUP_INTERVAL) > last_backup:
         today = datetime.today().strftime('%Y-%m-%d')
         upload_to_s3('pins.json', f'pinlist_backup/pin_backup_{today}')
+        upload_to_s3('pins.json', f'/pins.json')
         return today
     else:
         return False
