@@ -1,4 +1,4 @@
 env
 config.sh
 testing
-backup/*
+backup

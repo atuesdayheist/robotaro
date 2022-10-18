@@ -6,19 +6,10 @@ import requests
 from nacl.signing import VerifyKey
 from nacl.exceptions import BadSignatureError
 
-from s3_upload import upload_to_s3
-from s3_download import download_from_s3
-from backup import check_pin_backup
+from controller import set_pin, update_pin
+from utils import upload_to_s3, download_from_s3
 
-PUBLIC_KEY = os.environ.get("PUBLIC_KEY")
-REGISTERED_COMMANDS = ["rt", "sr", "random", "pin_text", "pin_file"]
-PIN_REGISTRY = {}
-BACKUP_INTERVAL = 7
-
-download_from_s3('pins.json', 'pins.json')
-with open('/tmp/pins.json') as jsonfile:
-    PIN_REGISTRY = json.load(jsonfile)
-
+# Discord Setup Stuff
 def verify_signature(event):
     raw_body = event.get("rawBody")
     auth_sig = event['params']['header'].get('x-signature-ed25519')
@@ -32,7 +23,14 @@ def ping_pong(body):
     if body.get("type") == 1:
         return True
     return False
-    
+
+PUBLIC_KEY = os.environ.get("PUBLIC_KEY")
+REGISTERED_COMMANDS = ["rt", "sr", "random", "pin", "pin_file"]
+BACKUP_INTERVAL = 7
+
+# Download and set up Pin list
+PIN_REGISTRY = set_pin()
+
 def lambda_handler(event, context):
     print(f"event {event}") # debug print
     # verify the signature
@@ -51,7 +49,7 @@ def lambda_handler(event, context):
 
     if data["name"] in REGISTERED_COMMANDS:
         command = body["data"]["name"]
-        
+
         # Status Check
         if command == "beep":
             return { "type": 4, "data": { "content": "Boop" }}
@@ -80,69 +78,24 @@ def lambda_handler(event, context):
             random_url = PIN_REGISTRY["keywords"][random_key]["url"]
             return { "type": 4, "data": { "content": f'{random_key} {random_url}' }}
 
-        # Makes a new Pin
-        elif command == "pin_file":
+        elif command == "pin" or command == "pin_file":
             pin_name = data["options"][0]["value"]
-
             if pin_name in PIN_REGISTRY["keywords"].keys():
                 return { "type": 4, "data": { "content": "Pin already exists" }}
-            else: 
-                # Backup the pins if last backup date was more than a week ago
-                backed_up = check_pin_backup(PIN_REGISTRY["last_backup"], BACKUP_INTERVAL)
-                if backed_up:
-                    PIN_REGISTRY["last_backup"] = backed_up
-
-                attachment_id = data["options"][1]["value"]
-                attachment_url = data["resolved"]["attachments"][attachment_id]["url"]
-                filename = data["resolved"]["attachments"][attachment_id]["filename"]
-
-                if attachment_url[:4] == 'http' and (attachment_url[-4] == '.' or attachment_url[-5] == '.'):
-                    r = requests.get(attachment_url)
-                    if not r.ok:
-                        return { "type": 4, "data": { "content": "This didn't work for some reason, ask Raph" }}
-                    else:
-                        print("Try uploading to S3")
-                        print("Write to temp")
-                        open(f'/tmp/{filename}', 'wb').write(r.content)
-                        print("Upload to S3")
-                        upload_to_s3(f'/tmp/{filename}', f'{filename}')
-                        print("Remove from temp")
-                        os.remove(f'/tmp/{filename}')
-                
-                PIN_REGISTRY["keywords"][pin_name] = {
-                    "url": attachment_url,
-                    "usage": 0,
-                    "pinned by": body["member"]["user"]["username"],
-                    "include_random": True,
-                    "ratpot": False
-                }
-
-                with open('/tmp/pins.json', 'w') as pinlist:
-                    json.dump(PIN_REGISTRY, pinlist)
-
-            return { "type": 4, "data": { "content": "Successfully Pinned" }}
-
-        elif command == "pin_text":
-            pin_name = data["options"][0]["value"]
-
-            if pin_name in PIN_REGISTRY["keywords"].keys():
-                return { "type": 4, "data": { "content": "Pin already exists" }}
-            else: 
-                # Backup the pins if last backup date was more than a week ago
-                backed_up = check_pin_backup(PIN_REGISTRY["last_backup"], BACKUP_INTERVAL)
-                if backed_up:
-                    PIN_REGISTRY["last_backup"] = backed_up
-
+            
+            if command == "pin":
                 pin_text = data["options"][1]["value"]
+                # Check to see if the pin is a file url anyway
                 if pin_text[:4] == 'http' and (pin_text[-4] == '.' or pin_text[-5] == '.'):
-                    filename = pin_text.split("/")[-1]
                     r = requests.get(pin_text)
                     if not r.ok:
+                        print(json.loads(r.text))
                         return { "type": 4, "data": { "content": "This didn't work for some reason, ask Raph" }}
                     else:
-                        print("Try uploading to S3")
+                        # backing up the file since Discord keeps losing them
+                        filename = ".".join([pin_name, pin_text.split(".")[-1]])
                         open(f'/tmp/{filename}', 'wb').write(r.content)
-                        upload_to_s3(f'/tmp/{filename}', f'{filename}')
+                        upload_to_s3(f'/tmp/{filename}', f'test/{filename}')
                         os.remove(f'/tmp/{filename}')
 
                 PIN_REGISTRY["keywords"][pin_name] = {
@@ -153,9 +106,32 @@ def lambda_handler(event, context):
                     "ratpot": False
                 }
 
-                with open('/tmp/pins.json', 'w') as pinlist:
-                    json.dump(PIN_REGISTRY, pinlist)
+                status = update_pin(PIN_REGISTRY, BACKUP_INTERVAL)
+                return { "type": 4, "data": { "content": status }}
+                
+            else:
+                attachment_id = data["options"][1]["value"]
+                attachment_url = data["resolved"]["attachments"][attachment_id]["url"]
+                if attachment_url[:4] == 'http' and (attachment_url[-4] == '.' or attachment_url[-5] == '.'):
+                    r = requests.get(attachment_url)
+                    if not r.ok:
+                        print(json.loads(r.text))
+                        return { "type": 4, "data": { "content": "This didn't work for some reason, ask Raph" }}
+                    else:
+                        # backing up the file since Discord keeps losing them
+                        filename = ".".join([pin_name, attachment_url.split(".")[-1]])
+                        open(f'/tmp/{filename}', 'wb').write(r.content)
+                        upload_to_s3(f'/tmp/{filename}', f'test/{filename}')
+                        os.remove(f'/tmp/{filename}')
 
-            return { "type": 4, "data": { "content": "Successfully Pinned" }}
-    else:
-        print("Invalid Command. This is why your code doesn't work, you idiot.")
+                        # Update pins.json
+                        PIN_REGISTRY["keywords"][pin_name] = {
+                            "url": attachment_url,
+                            "usage": 0,
+                            "pinned by": body["member"]["user"]["username"],
+                            "include_random": True,
+                            "ratpot": False
+                        }
+
+                        status = update_pin(PIN_REGISTRY, BACKUP_INTERVAL)
+                        return { "type": 4, "data": { "content": status }}
