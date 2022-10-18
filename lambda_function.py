@@ -26,7 +26,7 @@ def ping_pong(body):
     return False
 
 PUBLIC_KEY = os.environ.get("PUBLIC_KEY")
-REGISTERED_COMMANDS = ["rt", "sr", "random", "pin", "pin_file", "search"]
+REGISTERED_COMMANDS = ["beep", "rt", "sr", "random", "pin", "pin_file", "search"]
 BACKUP_INTERVAL = 7
 
 # Download and set up Pin list

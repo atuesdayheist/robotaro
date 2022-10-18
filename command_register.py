@@ -43,25 +43,25 @@ url = f'https://discord.com/api/v10/applications/{APPLICATION_ID}/commands'
 #     ]
 # }
 
-json = {
-    'name': 'pin',
-    'type': 1,
-    'description': 'Adds a new pin',
-    'options': [
-        {
-            "name": "pin_name",
-            "description": "Name of the Pin",
-            "type": 3,
-            "required": True,
-        },
-        {
-            "name": "pin_value",
-            "description": "What should this return?",
-            "type": 3,
-            "required": True,
-        }
-    ]
-}
+# json = {
+#     'name': 'pin',
+#     'type': 1,
+#     'description': 'Adds a new pin',
+#     'options': [
+#         {
+#             "name": "pin_name",
+#             "description": "Name of the Pin",
+#             "type": 3,
+#             "required": True,
+#         },
+#         {
+#             "name": "pin_value",
+#             "description": "What should this return?",
+#             "type": 3,
+#             "required": True,
+#         }
+#     ]
+# }
 
 # json = {
 #     'name': 'random',
@@ -109,6 +109,19 @@ json = {
 #     ]
 # }
 
+json = {
+    'name': 'search',
+    'type': 1,
+    'description': 'Searches for a Pin name by text',
+    'options': [
+        {
+            "name": "search_key",
+            "description": "Word to search for",
+            "type": 3,
+            "required": True,
+        }
+    ]
+}
 
 
 headers = {
