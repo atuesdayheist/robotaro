@@ -120,7 +120,7 @@ def lambda_handler(event, context):
                         # backing up the file since Discord keeps losing them
                         filename = ".".join([pin_name, attachment_url.split(".")[-1]])
                         open(f'/tmp/{filename}', 'wb').write(r.content)
-                        upload_to_s3(f'/tmp/{filename}', f'test/{filename}')
+                        upload_to_s3(f'/tmp/{filename}', f'pin_backup/{filename}')
                         os.remove(f'/tmp/{filename}')
 
                         # Update pins.json
