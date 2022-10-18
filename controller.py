@@ -22,6 +22,6 @@ def update_pin(PIN_REGISTRY, BACKUP_INTERVAL):
     
     if new_backup == True:
         upload_to_s3('/tmp/pins.json', f'pinlist_backup/pin_backup_{today}.json')
-    print("updating pin")
+
     upload_to_s3('/tmp/pins.json', f'pins.json')
     return "Pin Updated"

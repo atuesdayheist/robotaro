@@ -94,7 +94,7 @@ def lambda_handler(event, context):
                         # backing up the file since Discord keeps losing them
                         filename = ".".join([pin_name, pin_text.split(".")[-1]])
                         open(f'/tmp/{filename}', 'wb').write(r.content)
-                        upload_to_s3(f'/tmp/{filename}', f'test/{filename}')
+                        upload_to_s3(f'/tmp/{filename}', f'pin_backup/{filename}')
                         os.remove(f'/tmp/{filename}')
 
                 PIN_REGISTRY["keywords"][pin_name] = {
@@ -106,6 +106,7 @@ def lambda_handler(event, context):
                 }
 
                 status = update_pin(PIN_REGISTRY, BACKUP_INTERVAL)
+                print("Pin Updated")
                 return { "type": 4, "data": { "content": status }}
                 
             else:
