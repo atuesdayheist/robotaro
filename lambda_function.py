@@ -65,12 +65,11 @@ def lambda_handler(event, context):
         elif command == "sr":
             search_key = data["options"][0]["value"]
             all_keys = [pin_name for pin_name in PIN_REGISTRY["keywords"].keys() if search_key in pin_name and PIN_REGISTRY["keywords"][pin_name]["include_random"] == True]
-            random_key = random.sample(all_keys, 1)[0]
-            sr_url = PIN_REGISTRY["keywords"][random_key]["url"]
             if len(all_keys) == 0:
                 return { "type": 4, "data": { "content": "None found" }}
-            else:
-                return { "type": 4, "data": { "content": f'{random_key} {sr_url}' }}
+            random_key = random.sample(all_keys, 1)[0]
+            sr_url = PIN_REGISTRY["keywords"][random_key]["url"]
+            return { "type": 4, "data": { "content": f'{random_key} {sr_url}' }}
 
         # Gets a random pin
         elif command == "random":
