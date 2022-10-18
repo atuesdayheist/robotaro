@@ -43,36 +43,10 @@ url = f'https://discord.com/api/v10/applications/{APPLICATION_ID}/commands'
 #     ]
 # }
 
-json = {
-    'name': 'pin',
-    'type': 1,
-    'description': 'Adds a new pin',
-    'options': [
-        {
-            "name": "pin_name",
-            "description": "Name of the Pin",
-            "type": 3,
-            "required": True,
-        },
-        {
-            "name": "pin_value",
-            "description": "What should this return?",
-            "type": 3,
-            "required": True,
-        }
-    ]
-}
-
 # json = {
-#     'name': 'random',
+#     'name': 'pin',
 #     'type': 1,
-#     'description': 'Returns a random pin'
-# }
-
-# json = {
-#     'name': 'pin_file',
-#     'type': 1,
-#     'description': 'Adds a new pin.',
+#     'description': 'Adds a new pin',
 #     'options': [
 #         {
 #             "name": "pin_name",
@@ -81,13 +55,39 @@ json = {
 #             "required": True,
 #         },
 #         {
-#             "name": "pin_attach",
-#             "description": "Attach a file",
-#             "type": 11,
+#             "name": "pin_value",
+#             "description": "What should this return?",
+#             "type": 3,
 #             "required": True,
 #         }
 #     ]
 # }
+
+# json = {
+#     'name': 'random',
+#     'type': 1,
+#     'description': 'Returns a random pin'
+# }
+
+json = {
+    'name': 'pin_file',
+    'type': 1,
+    'description': 'Adds a new pin.',
+    'options': [
+        {
+            "name": "pin_name",
+            "description": "Name of the Pin",
+            "type": 3,
+            "required": True,
+        },
+        {
+            "name": "pin_attach",
+            "description": "Attach a file",
+            "type": 11,
+            "required": True,
+        }
+    ]
+}
 
 # json = {
 #     'name': 'pin_text',
@@ -115,5 +115,5 @@ headers = {
     'Authorization': f'Bot {BOT_SECRET_KEY}'
 }
 
-r = requests.post(test_url, headers=headers, json=json)
+r = requests.post(url, headers=headers, json=json)
 print(r.text)
