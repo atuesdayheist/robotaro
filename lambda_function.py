@@ -106,8 +106,7 @@ def lambda_handler(event, context):
                 }
 
                 status = update_pin(PIN_REGISTRY, BACKUP_INTERVAL)
-                print("Pin Updated")
-                return { "type": 4, "data": { "content": status }}
+                return { "type": 4, "data": { "content": "Pin Updated" }}
                 
             else:
                 attachment_id = data["options"][1]["value"]
