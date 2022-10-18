@@ -1,4 +1,5 @@
 import json
+from nis import match
 import os
 import random
 import requests
@@ -25,7 +26,7 @@ def ping_pong(body):
     return False
 
 PUBLIC_KEY = os.environ.get("PUBLIC_KEY")
-REGISTERED_COMMANDS = ["rt", "sr", "random", "pin", "pin_file"]
+REGISTERED_COMMANDS = ["rt", "sr", "random", "pin", "pin_file", "search"]
 BACKUP_INTERVAL = 7
 
 # Download and set up Pin list
@@ -71,12 +72,20 @@ def lambda_handler(event, context):
             sr_url = PIN_REGISTRY["keywords"][random_key]["url"]
             return { "type": 4, "data": { "content": f'{random_key} {sr_url}' }}
 
+        # Searchs for a pin
+        elif command == "search":
+            search_key = data["options"][0]["value"]
+            matches = [ key for key in PIN_REGISTRY["keywords"].keys() if search_key in key]
+            match_string = ", ".join(matches)
+            return { "type": 4, "data": { "content": f'```{match_string}```' }}
+
         # Gets a random pin
         elif command == "random":
             random_key = random.sample(PIN_REGISTRY["keywords"].keys(), 1)[0]
             random_url = PIN_REGISTRY["keywords"][random_key]["url"]
             return { "type": 4, "data": { "content": f'{random_key} {random_url}' }}
 
+        # Makes a new Pin
         elif command == "pin" or command == "pin_file":
             pin_name = data["options"][0]["value"]
             if pin_name in PIN_REGISTRY["keywords"].keys():
