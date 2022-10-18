@@ -105,7 +105,7 @@ def lambda_handler(event, context):
                     "ratpot": False
                 }
 
-                status = update_pin(PIN_REGISTRY, BACKUP_INTERVAL)
+                update_pin(PIN_REGISTRY, BACKUP_INTERVAL)
                 return { "type": 4, "data": { "content": "Pin Updated" }}
                 
             else:
@@ -132,5 +132,5 @@ def lambda_handler(event, context):
                             "ratpot": False
                         }
 
-                        status = update_pin(PIN_REGISTRY, BACKUP_INTERVAL)
-                        return { "type": 4, "data": { "content": status }}
+                        update_pin(PIN_REGISTRY, BACKUP_INTERVAL)
+                        return { "type": 4, "data": { "content": "Pin Updated" }}
