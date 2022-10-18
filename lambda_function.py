@@ -76,8 +76,11 @@ def lambda_handler(event, context):
         elif command == "search":
             search_key = data["options"][0]["value"]
             matches = [ key for key in PIN_REGISTRY["keywords"].keys() if search_key in key]
-            match_string = ", ".join(matches)
-            return { "type": 4, "data": { "content": f'```{match_string}```' }}
+            if len(matches) > 0:
+                match_string = ", ".join(matches)
+                return { "type": 4, "data": { "content": f'```{match_string}```' }}
+            else:
+                return { "type": 4, "data": { "content": 'No matches were found' }}
 
         # Gets a random pin
         elif command == "random":
