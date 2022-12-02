@@ -24,6 +24,7 @@ def ping_pong(body):
         return True
     return False
 
+APPLICATION_ID = os.environ.get("APPLICATION_ID")
 PUBLIC_KEY = os.environ.get("PUBLIC_KEY")
 REGISTERED_COMMANDS = ["beep", "rt", "sr", "random", "pin", "pin_file", "search", "taro_response"]
 BACKUP_INTERVAL = 7
@@ -40,7 +41,9 @@ def lambda_handler(event, context):
         raise Exception(f"[UNAUTHORIZED] Invalid request signature: {e}")
 
     body = event.get('body-json')
-    
+    interaction_id = body["id"]
+    interaction_token = body["token"]
+
     # check if message is a ping
     if ping_pong(body):
         return {"type": 1}
@@ -92,6 +95,11 @@ def lambda_handler(event, context):
             pin_name = data["options"][0]["value"]
             if pin_name in PIN_REGISTRY["keywords"].keys():
                 return { "type": 4, "data": { "content": "Pin already exists" }}
+
+            response_url = f'https://discord.com/api/v10/interactions/{interaction_id}/{interaction_token}/callback'
+            followup_url = f'https://discord.com/api/v10/webhooks/{APPLICATION_ID}/{interaction_token}'
+            response_json = { "type": 4, "data": { "content": "Updating Pin..." }}
+            requests.post(response_url, json=response_json)
             
             if command == "pin":
                 pin_text = data["options"][1]["value"]
@@ -100,7 +108,7 @@ def lambda_handler(event, context):
                     r = requests.get(pin_text)
                     if not r.ok:
                         print(json.loads(r.text))
-                        return { "type": 4, "data": { "content": "This didn't work for some reason, ask Raph" }}
+                        requests.post(followup_url, json={ "content": "This didn't work for some reason, contact the owner" })
                     else:
                         # backing up the file since Discord keeps losing them
                         filename = ".".join([pin_name, pin_text.split(".")[-1]])
@@ -117,7 +125,7 @@ def lambda_handler(event, context):
                 }
 
                 update_pin(PIN_REGISTRY, BACKUP_INTERVAL)
-                return { "type": 4, "data": { "content": "Pin Updated" }}
+                requests.post(followup_url, json={ "content": "Pin Updated" })
                 
             else:
                 attachment_id = data["options"][1]["value"]
@@ -126,7 +134,7 @@ def lambda_handler(event, context):
                     r = requests.get(attachment_url)
                     if not r.ok:
                         print(json.loads(r.text))
-                        return { "type": 4, "data": { "content": "This didn't work for some reason, ask Raph" }}
+                        requests.post(followup_url, json={ "content": "This didn't work for some reason, contact the owner" })
                     else:
                         # backing up the file since Discord keeps losing them
                         filename = ".".join([pin_name, attachment_url.split(".")[-1]])
@@ -144,18 +152,4 @@ def lambda_handler(event, context):
                         }
 
                         update_pin(PIN_REGISTRY, BACKUP_INTERVAL)
-                        return { "type": 4, "data": { "content": "Pin Updated" }}
-
-        # Testing responses
-        elif command == "taro_response":
-            interaction_id = event["rawBody"]["id"]
-            interaction_token = event["rawBody"]["token"]
-            response_url = f'https://discord.com/api/v10/interactions/{interaction_id}/{interaction_token}/callback'
-            response_json = {
-                "type": 4,
-                "data": {
-                    "content": "Congrats on sending your command!"
-                }
-            }
-            response = requests.post(response_url, json=response_json)
-            print(response)
+                        requests.post(followup_url, json={ "content": "Pin Updated" })
