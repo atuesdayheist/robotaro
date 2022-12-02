@@ -109,18 +109,24 @@ url = f'https://discord.com/api/v10/applications/{APPLICATION_ID}/commands'
 #     ]
 # }
 
+# json = {
+#     'name': 'search',
+#     'type': 1,
+#     'description': 'Searches for a Pin name by text',
+#     'options': [
+#         {
+#             "name": "search_key",
+#             "description": "Word to search for",
+#             "type": 3,
+#             "required": True,
+#         }
+#     ]
+# }
+
 json = {
-    'name': 'search',
+    'name': 'taro_response',
     'type': 1,
-    'description': 'Searches for a Pin name by text',
-    'options': [
-        {
-            "name": "search_key",
-            "description": "Word to search for",
-            "type": 3,
-            "required": True,
-        }
-    ]
+    'description': 'Testing to send a message, then append later'
 }
 
 
@@ -128,5 +134,5 @@ headers = {
     'Authorization': f'Bot {BOT_SECRET_KEY}'
 }
 
-r = requests.post(url, headers=headers, json=json)
+r = requests.post(test_url, headers=headers, json=json)
 print(r.text)

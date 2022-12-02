@@ -1,5 +1,4 @@
 import json
-from nis import match
 import os
 import random
 import requests
@@ -8,7 +7,7 @@ from nacl.signing import VerifyKey
 from nacl.exceptions import BadSignatureError
 
 from controller import set_pin, update_pin
-from utils import upload_to_s3, download_from_s3
+from utils import upload_to_s3
 
 # Discord Setup Stuff
 def verify_signature(event):
@@ -26,7 +25,7 @@ def ping_pong(body):
     return False
 
 PUBLIC_KEY = os.environ.get("PUBLIC_KEY")
-REGISTERED_COMMANDS = ["beep", "rt", "sr", "random", "pin", "pin_file", "search"]
+REGISTERED_COMMANDS = ["beep", "rt", "sr", "random", "pin", "pin_file", "search", "taro_response"]
 BACKUP_INTERVAL = 7
 
 # Download and set up Pin list
@@ -146,3 +145,17 @@ def lambda_handler(event, context):
 
                         update_pin(PIN_REGISTRY, BACKUP_INTERVAL)
                         return { "type": 4, "data": { "content": "Pin Updated" }}
+
+        # Testing responses
+        elif command == "taro_response":
+            interaction_id = event["rawBody"]["id"]
+            interaction_token = event["rawBody"]["token"]
+            response_url = f'https://discord.com/api/v10/interactions/{interaction_id}/{interaction_token}/callback'
+            response_json = {
+                "type": 4,
+                "data": {
+                    "content": "Congrats on sending your command!"
+                }
+            }
+            response = requests.post(response_url, json=response_json)
+            print(response)
